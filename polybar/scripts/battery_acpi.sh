@@ -1,35 +1,45 @@
 #!/usr/bin/bash
 
+path=$(ls -A '/sys/class/power_supply/')
 
-# Getting the data and initializing an array.
-BATTERY_INFO=($( acpi | awk -F',' '{ print $0 }'))
+if [[ "$path" == "" ]] ; then
+    # Format charge & color depending on the status.
+    FORMAT="%{B#57e626}%{B#57e626}  "
 
-# Formatting helpers
-CHARGE=$((${BATTERY_INFO[3]//%,}))
-ICON=""
-FORMAT=""
-
-# Battery icon to reflect on the bar.
-if [[ "${BATTERY_INFO[2]}" == *"Charging"* ]] || [[ "${BATTERY_INFO[2]}" == *"Unknown"* ]] ; then
-    ICON="  "
+    FORMAT="$FORMAT ON AC $FORMAT"
+    # Display on bar
+    echo $FORMAT
 else
-    ICON=" - "
+    # Getting the data and initializing an array.
+    BATTERY_INFO=($( acpi | awk -F',' '{ print $0 }'))
+
+    # Formatting helpers
+    CHARGE=$((${BATTERY_INFO[3]//%,}))
+    ICON=""
+    FORMAT=""
+
+    # Battery icon to reflect on the bar.
+    if [[ "${BATTERY_INFO[2]}" == *"Charging"* ]] || [[ "${BATTERY_INFO[2]}" == *"Unknown"* ]] ; then
+        ICON="  "
+    else
+        ICON=" - "
+    fi
+
+
+    # charging status with same background color
+    if [[ $CHARGE -lt 10 ]]; then
+        FORMAT="%{B#FF0000}%{B#FF0000}  "
+    elif [[ $CHARGE -lt 30 ]]; then
+        FORMAT="%{B#FF0000}%{B#7ab5e9}  "
+    elif [[ $CHARGE -lt 60 ]]; then
+        FORMAT="%{B#7ab5e9}%{B#7ae9a9}  "
+    elif [[ $CHARGE -lt 100 ]]; then
+        FORMAT="%{B#57e626}%{B#57e626}  "
+    fi
+
+    # Format charge & color depending on the status.
+    FORMAT="$FORMAT $ICON $CHARGE% $FORMAT"
+
+    # Display on bar
+    echo $FORMAT
 fi
-
-
-# charging status with same background color
-if [[ $CHARGE -lt 10 ]]; then
-    FORMAT="%{B#18181}%{B#8c0a0a0a}  "
-elif [[ $CHARGE -lt 30 ]]; then
-    FORMAT="%{B#18181}%{B#8c0a0a0a}  "
-elif [[ $CHARGE -lt 60 ]]; then
-    FORMAT="%{B#18181}%{B#8c0a0a0a}  "
-elif [[ $CHARGE -lt 100 ]]; then
-    FORMAT="%{B#18181}%{B#8c0a0a0a}  "
-fi
-
-# Format charge & color depending on the status.
-FORMAT="$FORMAT $ICON $CHARGE%"
-
-# Display on bar
-echo $FORMAT
